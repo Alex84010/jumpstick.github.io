@@ -44,7 +44,7 @@
       physics: {
         default: 'arcade',
         arcade: { 
-          gravity: { y: 800 }, 
+          gravity: { y: 300 }, 
           debug: false 
         }
       },
@@ -180,7 +180,7 @@
       }
 
       if (cursors.up.isDown && player.body.touching.down) {
-        player.setVelocityY(-500);
+        player.setVelocityY(-330);
       }
 
       // Mise à jour du score (hauteur)
