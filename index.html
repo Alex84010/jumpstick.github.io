@@ -63,15 +63,15 @@
     // Pattern de plateformes qui se répète
     const platformPattern = [
       { x: 0.5, y: 0, size: 1.0 },      // Centre, grande
-      { x: 0.3, y: 200, size: 0.9 },    // Gauche
-      { x: 0.7, y: 400, size: 0.8 },    // Droite
-      { x: 0.5, y: 600, size: 0.75 },   // Centre
-      { x: 0.2, y: 800, size: 0.7 },    // Gauche
-      { x: 0.8, y: 1000, size: 0.65 },  // Droite
-      { x: 0.4, y: 1200, size: 0.6 },   // Gauche-centre
-      { x: 0.6, y: 1400, size: 0.55 },  // Droite-centre
-      { x: 0.5, y: 1600, size: 0.5 },   // Centre
-      { x: 0.3, y: 1800, size: 0.45 },  // Gauche
+      { x: 0.3, y: 130, size: 0.95 },   // Gauche
+      { x: 0.7, y: 260, size: 0.9 },    // Droite
+      { x: 0.5, y: 390, size: 0.85 },   // Centre
+      { x: 0.2, y: 520, size: 0.8 },    // Gauche
+      { x: 0.8, y: 650, size: 0.75 },   // Droite
+      { x: 0.4, y: 780, size: 0.7 },    // Gauche-centre
+      { x: 0.6, y: 910, size: 0.65 },   // Droite-centre
+      { x: 0.35, y: 1040, size: 0.6 },  // Gauche
+      { x: 0.75, y: 1170, size: 0.55 }, // Droite
     ];
     
     let platformGroup;
@@ -110,22 +110,25 @@
       // Groupe de plateformes
       platformGroup = this.physics.add.staticGroup();
 
-      // Plateforme de sol complète en bas de l'écran
-      const groundPlatform = platformGroup.create(width / 2, height - 32, 'cube1');
+      // Plateforme de sol complète en bas de l'écran (VISIBLE)
+      const groundPlatform = platformGroup.create(width / 2, height - 20, 'cube1');
       groundPlatform.displayWidth = width;
-      groundPlatform.displayHeight = 64;
+      groundPlatform.displayHeight = 40;
       groundPlatform.refreshBody();
       groundPlatform.cubeType = 'cube1';
 
-      // Plateformes de test visibles
-      platformGroup.create(width * 0.3, height - 200, 'cube1').setScale(1.5).refreshBody();
-      platformGroup.create(width * 0.7, height - 350, 'cube2').setScale(1.3).refreshBody();
-      platformGroup.create(width * 0.5, height - 500, 'cube3').setScale(1.1).refreshBody();
-      platformGroup.create(width * 0.2, height - 650, 'cube1').setScale(1.0).refreshBody();
-      platformGroup.create(width * 0.8, height - 800, 'cube2').setScale(0.9).refreshBody();
+      // Plateformes progressives avec espacements sautables
+      platformGroup.create(width * 0.3, height - 150, 'cube1').setScale(1.5).refreshBody();
+      platformGroup.create(width * 0.7, height - 280, 'cube2').setScale(1.4).refreshBody();
+      platformGroup.create(width * 0.4, height - 410, 'cube3').setScale(1.3).refreshBody();
+      platformGroup.create(width * 0.8, height - 540, 'cube1').setScale(1.2).refreshBody();
+      platformGroup.create(width * 0.2, height - 670, 'cube2').setScale(1.1).refreshBody();
+      platformGroup.create(width * 0.6, height - 800, 'cube3').setScale(1.0).refreshBody();
+      platformGroup.create(width * 0.35, height - 930, 'cube1').setScale(0.9).refreshBody();
+      platformGroup.create(width * 0.75, height - 1060, 'cube2').setScale(0.85).refreshBody();
 
       // Générer les premières plateformes AU-DESSUS
-      generatePlatforms(this, -100, -2500);
+      generatePlatforms(this, -1100, -3500);
 
       // Joueur (spawne juste au-dessus de la plateforme du bas)
       player = this.physics.add.sprite(width / 2, height - 100, 'dude');
@@ -227,7 +230,7 @@
       const height = scene.cameras.main.height;
       
       // Calculer combien de patterns on doit générer
-      const patternHeight = 2000; // Hauteur d'un pattern complet
+      const patternHeight = 1300; // Hauteur d'un pattern complet (ajusté)
       const startPattern = Math.floor(maxY / patternHeight);
       const endPattern = Math.floor(minY / patternHeight);
       
