@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
-  <title>Level 1</title>
+  <title>JumpStick</title>
   <link rel="icon" type="image/png" sizes="64x64" href="./favicon.png">
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.11.0/dist/phaser.js"></script>
 
@@ -43,6 +43,7 @@
       height: 600,
       physics: {
         default: 'arcade',
+        backgroundColor: '#999999',
         arcade: { gravity: { y: 300 }, debug: false }
       },
       scene: { preload, create, update }
@@ -82,7 +83,6 @@
 
     // ================= CREATE =================
     function create() {
-      this.add.image(400, 300, 'sky');
 
       // Timer
       timerText = this.add.text(16, 16, 'Temps: 120', {
