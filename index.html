@@ -110,8 +110,8 @@
       // Groupe de plateformes
       platformGroup = this.physics.add.staticGroup();
 
-      // Plateforme de sol complète au départ (toute la largeur)
-      const groundPlatform = platformGroup.create(width / 2, height - 20, 'cube1');
+      // Plateforme de sol complète au départ (toute la largeur) - montée plus haut
+      const groundPlatform = platformGroup.create(width / 2, height - 50, 'cube1');
       groundPlatform.displayWidth = width;
       groundPlatform.displayHeight = 64;
       groundPlatform.refreshBody();
