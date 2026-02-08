@@ -26,6 +26,11 @@ let player;
 let platforms;
 let cursors;
 
+/* ===== RÈGLES DE GÉNÉRATION ===== */
+const PLATFORM_COUNT = 8;
+const MAX_GAP_X = 180;
+const MAX_GAP_Y = 120;
+
 const config = {
   type: Phaser.AUTO,
   parent: 'game',
@@ -63,17 +68,8 @@ function preload() {
 
 function create() {
 
-  /* SOL */
   platforms = this.physics.add.staticGroup();
-
-  const ySol = this.scale.height - 40;
-
-  for (let x = 40; x < this.scale.width; x += 80) {
-    const cube = Phaser.Math.Between(1, 3);
-    platforms.create(x, ySol, 'cube' + cube)
-             .setScale(0.5)
-             .refreshBody();
-  }
+  generatePlatforms(this);
 
   /* JOUEUR */
   player = this.physics.add.sprite(100, 100, 'perso');
@@ -91,7 +87,7 @@ function create() {
     player.height * 0.2
   );
 
-  /* COLLISION */
+  /* COLLISIONS */
   this.physics.add.collider(player, platforms);
 
   /* CLAVIER */
@@ -138,6 +134,38 @@ function update() {
 
   if (cursors.up.isDown && player.body.touching.down) {
     player.setVelocityY(-330);
+  }
+}
+
+/* ================= GÉNÉRATION PLATEFORMES ================= */
+
+function generatePlatforms(scene) {
+
+  platforms.clear(true, true);
+
+  let lastX = 80;
+  let lastY = scene.scale.height - 120;
+
+  for (let i = 0; i < PLATFORM_COUNT; i++) {
+
+    const gapX = Phaser.Math.Between(100, MAX_GAP_X);
+    const gapY = Phaser.Math.Between(-MAX_GAP_Y, MAX_GAP_Y);
+
+    const x = lastX + gapX;
+    const y = Phaser.Math.Clamp(
+      lastY + gapY,
+      150,
+      scene.scale.height - 60
+    );
+
+    const cube = Phaser.Math.Between(1, 3);
+
+    platforms.create(x, y, 'cube' + cube)
+             .setScale(0.5)
+             .refreshBody();
+
+    lastX = x;
+    lastY = y;
   }
 }
 </script>
