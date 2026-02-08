@@ -45,7 +45,7 @@
         default: 'arcade',
         arcade: { 
           gravity: { y: 300 }, 
-          debug: true 
+          debug: false 
         }
       },
       scene: { preload, create, update }
@@ -110,18 +110,18 @@
       // Groupe de plateformes
       platformGroup = this.physics.add.staticGroup();
 
-      // Plateforme de sol complète au départ (toute la largeur) - montée plus haut
-      const groundPlatform = platformGroup.create(width / 2, height - 50, 'cube1');
+      // Plateforme de sol complète au départ (toute la largeur) - très haute
+      const groundPlatform = platformGroup.create(width / 2, height / 2, 'cube1');
       groundPlatform.displayWidth = width;
       groundPlatform.displayHeight = 64;
       groundPlatform.refreshBody();
       groundPlatform.cubeType = 'cube1';
 
       // Générer les premières plateformes
-      generatePlatforms(this, 0, -2000);
+      generatePlatforms(this, height / 2 - 1000, height / 2 - 3000);
 
-      // Joueur (spawne juste au-dessus de la plateforme)
-      player = this.physics.add.sprite(width / 2, height - 70, 'dude');
+      // Joueur (spawne juste au-dessus de la plateforme au milieu de l'écran)
+      player = this.physics.add.sprite(width / 2, height / 2 - 60, 'dude');
       player.setScale(0.125);
       player.setBounce(0.2);
       player.setCollideWorldBounds(false); // Pas de limites pour pouvoir tomber
@@ -153,6 +153,9 @@
 
       // Collisions
       this.physics.add.collider(player, platformGroup);
+
+      // Animation de départ
+      player.anims.play('turn');
 
       // Caméra suit le joueur verticalement
       this.cameras.main.startFollow(player, false, 0, 0.1);
