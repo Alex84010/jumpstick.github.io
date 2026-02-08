@@ -12,7 +12,7 @@ html, body {
   padding: 0;
   width: 100%;
   height: 100%;
-  background: #999;
+  background: #333;
   overflow: hidden;
 }
 </style>
@@ -30,6 +30,7 @@ let cursors;
 const PLATFORM_COUNT = 8;
 const MAX_GAP_X = 180;
 const MAX_GAP_Y = 120;
+const TARGET_CUBE_SIZE = 80;
 
 const config = {
   type: Phaser.AUTO,
@@ -160,9 +161,12 @@ function generatePlatforms(scene) {
 
     const cube = Phaser.Math.Between(1, 3);
 
-    platforms.create(x, y, 'cube' + cube)
-             .setScale(0.5)
-             .refreshBody();
+const texture = scene.textures.get('cube' + cube).getSourceImage();
+const scale = TARGET_CUBE_SIZE / texture.width;
+
+platforms.create(x, y, 'cube' + cube)
+         .setScale(scale)
+         .refreshBody();
 
     lastX = x;
     lastY = y;
