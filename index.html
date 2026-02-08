@@ -120,8 +120,8 @@
       // Générer les premières plateformes
       generatePlatforms(this, 0, -2000);
 
-      // Joueur
-      player = this.physics.add.sprite(width / 2, height - 90, 'dude');
+      // Joueur (spawne juste au-dessus de la plateforme)
+      player = this.physics.add.sprite(width / 2, height - 70, 'dude');
       player.setScale(0.125);
       player.setBounce(0.2);
       player.setCollideWorldBounds(false); // Pas de limites pour pouvoir tomber
