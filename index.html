@@ -27,10 +27,10 @@ let platforms;
 let cursors;
 
 /* ===== RÈGLES DE GÉNÉRATION ===== */
-const PLATFORM_COUNT = 8;
+const TARGET_CUBE_SIZE = 80;
 const MAX_GAP_X = 180;
 const MAX_GAP_Y = 120;
-const TARGET_CUBE_SIZE = 80;
+const INITIAL_ROWS = 10; // nombre de lignes de cubes initiales
 
 const config = {
   type: Phaser.AUTO,
@@ -53,7 +53,6 @@ const config = {
 new Phaser.Game(config);
 
 /* ================= PRELOAD ================= */
-
 function preload() {
   this.load.spritesheet('perso', 'assets/personnage.png', {
     frameWidth: 320,
@@ -66,27 +65,22 @@ function preload() {
 }
 
 /* ================= CREATE ================= */
-
 function create() {
 
   platforms = this.physics.add.staticGroup();
-  generatePlatforms(this);
+
+  // Générer les premières lignes de cubes au-dessus du joueur
+  generateInitialPlatforms(this);
 
   /* JOUEUR */
-  player = this.physics.add.sprite(100, 100, 'perso');
+  player = this.physics.add.sprite(200, 300, 'perso');
   player.setScale(0.125);
   player.setBounce(0.1);
   player.setCollideWorldBounds(true);
 
   /* HITBOX */
-  player.body.setSize(
-    player.width * 0.5,
-    player.height * 0.8
-  );
-  player.body.setOffset(
-    player.width * 0.25,
-    player.height * 0.2
-  );
+  player.body.setSize(player.width * 0.5, player.height * 0.8);
+  player.body.setOffset(player.width * 0.25, player.height * 0.2);
 
   /* COLLISIONS */
   this.physics.add.collider(player, platforms);
@@ -114,62 +108,69 @@ function create() {
     frameRate: 10,
     repeat: -1
   });
+
+  // Caméra suit le joueur verticalement
+  this.cameras.main.startFollow(player, false, 0, 1);
 }
 
 /* ================= UPDATE ================= */
-
 function update() {
 
+  // Déplacements
   if (cursors.left.isDown) {
     player.setVelocityX(-160);
     player.anims.play('left', true);
-  }
-  else if (cursors.right.isDown) {
+  } else if (cursors.right.isDown) {
     player.setVelocityX(160);
     player.anims.play('right', true);
-  }
-  else {
+  } else {
     player.setVelocityX(0);
     player.anims.play('turn', true);
   }
 
-if (cursors.up.isDown && player.body.blocked.down) {
-  player.setVelocityY(-330);
+  // Saut
+  if (cursors.up.isDown && player.body.blocked.down) {
+    player.setVelocityY(-330);
   }
+
+  // Génération continue de plateformes si le joueur monte
+  generatePlatformsAbove(this);
 }
 
-/* ================= GÉNÉRATION PLATEFORMES ================= */
-
-function generatePlatforms(scene) {
-
-  platforms.clear(true, true);
-
+/* ================= GENERATION PLATEFORMES ================= */
+function generateInitialPlatforms(scene) {
   let lastX = 80;
   let lastY = scene.scale.height - 120;
 
-  for (let i = 0; i < PLATFORM_COUNT; i++) {
+  for (let row = 0; row < INITIAL_ROWS; row++) {
+    for (let i = 0; i < 8; i++) { // 8 cubes par ligne
+      const cube = Phaser.Math.Between(1, 3);
+      const texture = scene.textures.get('cube' + cube).getSourceImage();
+      const scale = TARGET_CUBE_SIZE / texture.width;
+      const x = i * TARGET_CUBE_SIZE;
+      const y = lastY - row * TARGET_CUBE_SIZE;
+      platforms.create(x, y, 'cube' + cube).setScale(scale).refreshBody();
+    }
+    lastY -= TARGET_CUBE_SIZE;
+  }
+}
 
-    const gapX = Phaser.Math.Between(100, MAX_GAP_X);
-    const gapY = Phaser.Math.Between(-MAX_GAP_Y, MAX_GAP_Y);
+// Génération de nouvelles lignes de cubes si le joueur monte trop
+let highestY = 0;
+function generatePlatformsAbove(scene) {
+  const cameraTop = scene.cameras.main.scrollY;
 
-    const x = lastX + gapX;
-    const y = Phaser.Math.Clamp(
-      lastY + gapY,
-      150,
-      scene.scale.height - 60
-    );
-
-    const cube = Phaser.Math.Between(1, 3);
-
-const texture = scene.textures.get('cube' + cube).getSourceImage();
-const scale = TARGET_CUBE_SIZE / texture.width;
-
-platforms.create(x, y, 'cube' + cube)
-         .setScale(scale)
-         .refreshBody();
-
-    lastX = x;
-    lastY = y;
+  // On crée une nouvelle ligne si le joueur est proche du sommet
+  if (player.y < cameraTop + 200) {
+    const rowY = highestY - TARGET_CUBE_SIZE;
+    for (let i = 0; i < 8; i++) {
+      const cube = Phaser.Math.Between(1, 3);
+      const texture = scene.textures.get('cube' + cube).getSourceImage();
+      const scale = TARGET_CUBE_SIZE / texture.width;
+      const x = i * TARGET_CUBE_SIZE;
+      platforms.create(x, rowY, 'cube' + cube).setScale(scale).refreshBody();
+    }
+    highestY = rowY;
   }
 }
 </script>
