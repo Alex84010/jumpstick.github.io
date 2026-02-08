@@ -1,1 +1,17 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JumpStick</title>
+</head>
+<body>
+    <video id="intro" src="intro.mp4"></video>
 
+    <script>
+        const video = document.getElementById("intro");
+        video.play()
+        video.onended = () => startGame();
+    </script>
+</body>
+</html>
