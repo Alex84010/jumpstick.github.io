@@ -110,16 +110,18 @@
       // Groupe de plateformes
       platformGroup = this.physics.add.staticGroup();
 
-      // Plateforme de départ
-      const startPlatform = platformGroup.create(width / 2, height - 50, 'cube1');
-      startPlatform.setScale(2).refreshBody();
-      startPlatform.cubeType = 'cube1';
+      // Plateforme de sol complète au départ (toute la largeur)
+      const groundPlatform = platformGroup.create(width / 2, height - 30, 'cube1');
+      groundPlatform.setScale(width / 400, 1).refreshBody(); // Étire en largeur
+      groundPlatform.displayWidth = width;
+      groundPlatform.refreshBody();
+      groundPlatform.cubeType = 'cube1';
 
       // Générer les premières plateformes
       generatePlatforms(this, 0, -2000);
 
       // Joueur
-      player = this.physics.add.sprite(width / 2, height - 150, 'dude');
+      player = this.physics.add.sprite(width / 2, height - 100, 'dude');
       player.setScale(0.125);
       player.setBounce(0.2);
       player.setCollideWorldBounds(false); // Pas de limites pour pouvoir tomber
@@ -195,9 +197,9 @@
       const cameraTop = this.cameras.main.scrollY;
       generatePlatforms(this, cameraTop - 1000, cameraTop - 3000);
 
-      // Mort si on tombe en bas de l'écran
+      // Mort si on tombe en bas de l'écran (seulement si on descend)
       const cameraBottom = this.cameras.main.scrollY + this.cameras.main.height;
-      if (player.y > cameraBottom + 100) {
+      if (player.y > cameraBottom + 50 && player.body.velocity.y > 0) {
         die(this);
       }
 
