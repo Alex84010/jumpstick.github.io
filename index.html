@@ -45,7 +45,7 @@
         default: 'arcade',
         arcade: { 
           gravity: { y: 300 }, 
-          debug: false 
+          debug: true 
         }
       },
       scene: { preload, create, update }
@@ -116,6 +116,13 @@
       groundPlatform.displayHeight = 64;
       groundPlatform.refreshBody();
       groundPlatform.cubeType = 'cube1';
+
+      // Plateformes de test visibles
+      platformGroup.create(width * 0.3, height - 200, 'cube1').setScale(1.5).refreshBody();
+      platformGroup.create(width * 0.7, height - 350, 'cube2').setScale(1.3).refreshBody();
+      platformGroup.create(width * 0.5, height - 500, 'cube3').setScale(1.1).refreshBody();
+      platformGroup.create(width * 0.2, height - 650, 'cube1').setScale(1.0).refreshBody();
+      platformGroup.create(width * 0.8, height - 800, 'cube2').setScale(0.9).refreshBody();
 
       // Générer les premières plateformes AU-DESSUS
       generatePlatforms(this, -100, -2500);
