@@ -110,18 +110,18 @@
       // Groupe de plateformes
       platformGroup = this.physics.add.staticGroup();
 
-      // Plateforme de sol complète au départ (toute la largeur) - très haute
-      const groundPlatform = platformGroup.create(width / 2, height / 2, 'cube1');
+      // Plateforme de sol complète en bas de l'écran
+      const groundPlatform = platformGroup.create(width / 2, height - 32, 'cube1');
       groundPlatform.displayWidth = width;
       groundPlatform.displayHeight = 64;
       groundPlatform.refreshBody();
       groundPlatform.cubeType = 'cube1';
 
-      // Générer les premières plateformes
-      generatePlatforms(this, height / 2 - 1000, height / 2 - 3000);
+      // Générer les premières plateformes AU-DESSUS
+      generatePlatforms(this, -100, -2500);
 
-      // Joueur (spawne juste au-dessus de la plateforme au milieu de l'écran)
-      player = this.physics.add.sprite(width / 2, height / 2 - 60, 'dude');
+      // Joueur (spawne juste au-dessus de la plateforme du bas)
+      player = this.physics.add.sprite(width / 2, height - 100, 'dude');
       player.setScale(0.125);
       player.setBounce(0.2);
       player.setCollideWorldBounds(false); // Pas de limites pour pouvoir tomber
@@ -229,14 +229,14 @@
         
         platformPattern.forEach(platform => {
           const x = platform.x * width;
-          const y = baseY + platform.y;
+          const y = baseY - platform.y; // CHANGÉ: moins au lieu de plus pour aller vers le haut
           
           // Vérifier si une plateforme existe déjà à cet endroit
           const exists = platformGroup.children.entries.some(existing => 
             Math.abs(existing.x - x) < 10 && Math.abs(existing.y - y) < 10
           );
           
-          if (!exists && y < minY && y > maxY - 500) {
+          if (!exists && y > maxY && y < minY) {
             const cubeTypes = ['cube1', 'cube2', 'cube3'];
             const cubeType = Phaser.Utils.Array.GetRandom(cubeTypes);
             
