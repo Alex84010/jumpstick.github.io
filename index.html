@@ -45,7 +45,7 @@
         default: 'arcade',
         arcade: { 
           gravity: { y: 300 }, 
-          debug: false 
+          debug: true 
         }
       },
       scene: { preload, create, update }
@@ -179,7 +179,8 @@
         player.anims.play('turn');
       }
 
-      if (cursors.up.isDown && player.body.touching.down) {
+      // Saut - utiliser blocked.down pour les groupes statiques
+      if (cursors.up.isDown && player.body.blocked.down) {
         player.setVelocityY(-330);
       }
 
