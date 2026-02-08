@@ -111,9 +111,9 @@
       platformGroup = this.physics.add.staticGroup();
 
       // Plateforme de sol complète au départ (toute la largeur)
-      const groundPlatform = platformGroup.create(width / 2, height - 30, 'cube1');
-      groundPlatform.setScale(width / 400, 1).refreshBody(); // Étire en largeur
+      const groundPlatform = platformGroup.create(width / 2, height - 20, 'cube1');
       groundPlatform.displayWidth = width;
+      groundPlatform.displayHeight = 64;
       groundPlatform.refreshBody();
       groundPlatform.cubeType = 'cube1';
 
@@ -121,7 +121,7 @@
       generatePlatforms(this, 0, -2000);
 
       // Joueur
-      player = this.physics.add.sprite(width / 2, height - 80, 'dude');
+      player = this.physics.add.sprite(width / 2, height - 90, 'dude');
       player.setScale(0.125);
       player.setBounce(0.2);
       player.setCollideWorldBounds(false); // Pas de limites pour pouvoir tomber
