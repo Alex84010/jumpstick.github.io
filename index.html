@@ -2,10 +2,8 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>JumpStick</title>
-
+<title>JumpStick Vertical</title>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.js"></script>
-
 <style>
 html, body {
   margin: 0;
@@ -17,7 +15,6 @@ html, body {
 }
 </style>
 </head>
-
 <body>
 <div id="game"></div>
 
@@ -25,16 +22,13 @@ html, body {
 let player;
 let platforms;
 let cursors;
-
-/* ===== RÈGLES DE GÉNÉRATION ===== */
-const TARGET_CUBE_SIZE = 80;
-const MAX_GAP_X = 180;
-const MAX_GAP_Y = 120;
-const INITIAL_ROWS = 10; // nombre de lignes de cubes initiales
+const TARGET_CUBE_SIZE = 80; // taille du cube à l'écran
 
 const config = {
   type: Phaser.AUTO,
   parent: 'game',
+  width: window.innerWidth,
+  height: window.innerHeight,
   scale: {
     mode: Phaser.Scale.RESIZE,
     autoCenter: Phaser.Scale.CENTER_BOTH
@@ -58,7 +52,6 @@ function preload() {
     frameWidth: 320,
     frameHeight: 480
   });
-
   this.load.image('cube1', 'assets/cube1.png');
   this.load.image('cube2', 'assets/cube2.png');
   this.load.image('cube3', 'assets/cube3.png');
@@ -66,56 +59,59 @@ function preload() {
 
 /* ================= CREATE ================= */
 function create() {
-
   platforms = this.physics.add.staticGroup();
 
-  // Générer les premières lignes de cubes au-dessus du joueur
-  generateInitialPlatforms(this);
+  // Générer les premières lignes de cubes
+  let startY = this.scale.height;
+  for (let row = 0; row < 10; row++) {
+    for (let i = 0; i < 8; i++) {
+      const cube = Phaser.Math.Between(1,3);
+      const texture = this.textures.get('cube' + cube).getSourceImage();
+      const scale = TARGET_CUBE_SIZE / texture.width;
+      const x = i * TARGET_CUBE_SIZE;
+      const y = startY - row * TARGET_CUBE_SIZE;
+      platforms.create(x, y, 'cube' + cube).setScale(scale).refreshBody();
+    }
+  }
 
-  /* JOUEUR */
-  player = this.physics.add.sprite(200, 300, 'perso');
+  // Joueur
+  player = this.physics.add.sprite(200, this.scale.height - 100, 'perso');
   player.setScale(0.125);
   player.setBounce(0.1);
   player.setCollideWorldBounds(true);
 
-  /* HITBOX */
-  player.body.setSize(player.width * 0.5, player.height * 0.8);
-  player.body.setOffset(player.width * 0.25, player.height * 0.2);
+  player.body.setSize(player.width*0.5, player.height*0.8);
+  player.body.setOffset(player.width*0.25, player.height*0.2);
 
-  /* COLLISIONS */
   this.physics.add.collider(player, platforms);
 
-  /* CLAVIER */
   cursors = this.input.keyboard.createCursorKeys();
 
-  /* ANIMATIONS */
+  // Animations
   this.anims.create({
     key: 'left',
-    frames: this.anims.generateFrameNumbers('perso', { start: 0, end: 3 }),
+    frames: this.anims.generateFrameNumbers('perso', { start:0, end:3 }),
     frameRate: 10,
     repeat: -1
   });
-
   this.anims.create({
     key: 'turn',
-    frames: [{ key: 'perso', frame: 4 }],
+    frames: [{key:'perso', frame:4}],
     frameRate: 20
   });
-
   this.anims.create({
     key: 'right',
-    frames: this.anims.generateFrameNumbers('perso', { start: 5, end: 8 }),
+    frames: this.anims.generateFrameNumbers('perso', { start:5, end:8 }),
     frameRate: 10,
     repeat: -1
   });
 
-  // Caméra suit le joueur verticalement
+  // Caméra qui suit le joueur verticalement
   this.cameras.main.startFollow(player, false, 0, 1);
 }
 
 /* ================= UPDATE ================= */
 function update() {
-
   // Déplacements
   if (cursors.left.isDown) {
     player.setVelocityX(-160);
@@ -131,46 +127,6 @@ function update() {
   // Saut
   if (cursors.up.isDown && player.body.blocked.down) {
     player.setVelocityY(-330);
-  }
-
-  // Génération continue de plateformes si le joueur monte
-  generatePlatformsAbove(this);
-}
-
-/* ================= GENERATION PLATEFORMES ================= */
-function generateInitialPlatforms(scene) {
-  let lastX = 80;
-  let lastY = scene.scale.height - 120;
-
-  for (let row = 0; row < INITIAL_ROWS; row++) {
-    for (let i = 0; i < 8; i++) { // 8 cubes par ligne
-      const cube = Phaser.Math.Between(1, 3);
-      const texture = scene.textures.get('cube' + cube).getSourceImage();
-      const scale = TARGET_CUBE_SIZE / texture.width;
-      const x = i * TARGET_CUBE_SIZE;
-      const y = lastY - row * TARGET_CUBE_SIZE;
-      platforms.create(x, y, 'cube' + cube).setScale(scale).refreshBody();
-    }
-    lastY -= TARGET_CUBE_SIZE;
-  }
-}
-
-// Génération de nouvelles lignes de cubes si le joueur monte trop
-let highestY = 0;
-function generatePlatformsAbove(scene) {
-  const cameraTop = scene.cameras.main.scrollY;
-
-  // On crée une nouvelle ligne si le joueur est proche du sommet
-  if (player.y < cameraTop + 200) {
-    const rowY = highestY - TARGET_CUBE_SIZE;
-    for (let i = 0; i < 8; i++) {
-      const cube = Phaser.Math.Between(1, 3);
-      const texture = scene.textures.get('cube' + cube).getSourceImage();
-      const scale = TARGET_CUBE_SIZE / texture.width;
-      const x = i * TARGET_CUBE_SIZE;
-      platforms.create(x, rowY, 'cube' + cube).setScale(scale).refreshBody();
-    }
-    highestY = rowY;
   }
 }
 </script>
