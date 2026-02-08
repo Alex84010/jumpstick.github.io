@@ -3,48 +3,50 @@
 
 <head>
   <meta charset="UTF-8">
-  <title>JumpStick</title>
+  <title>JumpStick - Climbing Edition</title>
   <link rel="icon" type="image/png" sizes="64x64" href="./favicon.png">
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.11.0/dist/phaser.js"></script>
 
   <style>
     body {
       margin: 0;
-      background: #444;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
+      padding: 0;
+      overflow: hidden;
+      background: #000;
     }
 
     canvas {
-      border: 4px solid #222;
+      display: block;
+      margin: 0;
+      padding: 0;
     }
   </style>
 </head>
 
 <body>
 
-  <!-- Boutons -->
-  <img src="assets/logohome.png" style="cursor:pointer;width:105px;position:fixed;top:10px;left:10px;"
+  <!-- Boutons en overlay -->
+  <img src="assets/logohome.png" style="cursor:pointer;width:80px;position:fixed;top:10px;left:10px;z-index:1000;"
     onclick="window.location.href='./index.html'">
 
-  <img src="assets/logoretour.png" style="cursor:pointer;width:105px;position:fixed;top:10px;left:125px;"
+  <img src="assets/logoretour.png" style="cursor:pointer;width:80px;position:fixed;top:10px;left:100px;z-index:1000;"
     onclick="window.location.href='./niv1a10.html'">
 
-  <img src="assets/logorefresh.png" style="cursor:pointer;width:105px;position:fixed;top:10px;right:10px;"
-    onclick="window.location.href='./level1.html'">
+  <img src="assets/logorefresh.png" style="cursor:pointer;width:80px;position:fixed;top:10px;right:10px;z-index:1000;"
+    onclick="location.reload()">
 
   <script>
     // ================= CONFIG =================
     const config = {
       type: Phaser.AUTO,
-      width: 800,
-      height: 600,
+      width: window.innerWidth,
+      height: window.innerHeight,
       physics: {
         default: 'arcade',
-        backgroundColor: '#999999',
-        arcade: { gravity: { y: 300 }, debug: false }
+        arcade: { 
+          gravity: { y: 800 }, 
+          debug: false 
+        }
       },
       scene: { preload, create, update }
     };
@@ -52,27 +54,35 @@
     new Phaser.Game(config);
 
     // ================= VARIABLES =================
-    let player, cursors, platforms, stars, bombs;
-    let lifeIcons = [];
+    let player, cursors, platforms;
     let gameOver = false;
-
-    const MAX_HALF_LIVES = 6; // 3 cœurs
-    let halfLives = MAX_HALF_LIVES;
-
-    let elapsedTime = 0;
-    const survivalTime = 120;
-    let timerText;
+    let score = 0;
+    let scoreText;
+    let highestY = 0;
+    
+    // Pattern de plateformes qui se répète
+    const platformPattern = [
+      { x: 0.5, y: 0, size: 1.0 },      // Centre, grande
+      { x: 0.3, y: 200, size: 0.9 },    // Gauche
+      { x: 0.7, y: 400, size: 0.8 },    // Droite
+      { x: 0.5, y: 600, size: 0.75 },   // Centre
+      { x: 0.2, y: 800, size: 0.7 },    // Gauche
+      { x: 0.8, y: 1000, size: 0.65 },  // Droite
+      { x: 0.4, y: 1200, size: 0.6 },   // Gauche-centre
+      { x: 0.6, y: 1400, size: 0.55 },  // Droite-centre
+      { x: 0.5, y: 1600, size: 0.5 },   // Centre
+      { x: 0.3, y: 1800, size: 0.45 },  // Gauche
+    ];
+    
+    let platformGroup;
+    let currentPatternOffset = 0;
 
     // ================= PRELOAD =================
     function preload() {
       this.load.image('sky', 'assets/sky.png');
-      this.load.image('ground', 'assets/platform.png');
-      this.load.image('star', 'assets/piece.png');
-      this.load.image('bomb', 'assets/bombe.png');
-
-      this.load.image('vie', 'assets/vie1.png');
-      this.load.image('demivie', 'assets/vie3.png');
-      this.load.image('novie', 'assets/vie2.png');
+      this.load.image('cube1', 'assets/platform.png');
+      this.load.image('cube2', 'assets/platform.png');
+      this.load.image('cube3', 'assets/platform.png');
 
       const selectedChar = localStorage.getItem('selectedCharacter') || '1';
       this.load.spritesheet('dude', `assets/personnageframe${selectedChar}.png`, {
@@ -83,34 +93,36 @@
 
     // ================= CREATE =================
     function create() {
+      const width = this.cameras.main.width;
+      const height = this.cameras.main.height;
 
-      // Timer
-      timerText = this.add.text(16, 16, 'Temps: 120', {
-        fontSize: '32px',
-        fill: '#000'
-      });
+      // Fond qui se répète
+      this.add.tileSprite(width / 2, height / 2, width, height * 3, 'sky');
 
-      // Cœurs
-      for (let i = 0; i < 3; i++) {
-        lifeIcons.push(
-          this.add.image(40 + i * 45, 70, 'vie').setScale(0.02)
-        );
-      }
+      // Score / Hauteur
+      scoreText = this.add.text(width / 2, 30, 'Hauteur: 0m', {
+        fontSize: '28px',
+        fill: '#fff',
+        stroke: '#000',
+        strokeThickness: 4
+      }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(100);
 
-      // Plateformes
-      platforms = this.physics.add.staticGroup();
-      platforms.create(400, 568, 'ground').setScale(2).refreshBody();
-      platforms.create(600, 400, 'ground');
-      platforms.create(100, 300, 'ground');
-      platforms.create(750, 220, 'ground');
+      // Groupe de plateformes
+      platformGroup = this.physics.add.staticGroup();
 
-      // Joueur (mêmes proportions que solo)
-      player = this.physics.add.sprite(100, 450, 'dude');
+      // Plateforme de départ
+      const startPlatform = platformGroup.create(width / 2, height - 50, 'cube1');
+      startPlatform.setScale(2).refreshBody();
+      startPlatform.cubeType = 'cube1';
+
+      // Générer les premières plateformes
+      generatePlatforms(this, 0, -2000);
+
+      // Joueur
+      player = this.physics.add.sprite(width / 2, height - 150, 'dude');
       player.setScale(0.125);
       player.setBounce(0.2);
-      player.setCollideWorldBounds(true);
-
-      // Hitbox fidèle
+      player.setCollideWorldBounds(false); // Pas de limites pour pouvoir tomber
       player.body.setSize(player.width * 0.5, player.height * 0.8);
       player.body.setOffset(player.width * 0.25, player.height * 0.2);
 
@@ -137,63 +149,30 @@
 
       cursors = this.input.keyboard.createCursorKeys();
 
-      // Pièces
-      stars = this.physics.add.group({
-        key: 'star',
-        repeat: 11,
-        setXY: { x: 12, y: 0, stepX: 70 }
-      });
-
-      stars.children.iterate(c => {
-        c.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
-        c.setScale(0.015);
-      });
-
-      // Bombes
-      bombs = this.physics.add.group();
-      spawnBomb();
-      spawnBomb();
-      spawnBomb();
-
       // Collisions
-      this.physics.add.collider(player, platforms);
-      this.physics.add.collider(stars, platforms);
-      this.physics.add.collider(bombs, platforms);
-      this.physics.add.overlap(player, stars, collectStar, null, this);
-      this.physics.add.collider(player, bombs, hitBomb, null, this);
+      this.physics.add.collider(player, platformGroup);
 
-      // Timer survie
-      this.time.addEvent({
-        delay: 1000,
-        loop: true,
-        callback: () => {
-          if (gameOver) return;
-          elapsedTime++;
-          const remain = survivalTime - elapsedTime;
-          timerText.setText('Temps: ' + remain);
-          if (remain <= 0) victory(this);
-        }
-      });
+      // Caméra suit le joueur verticalement
+      this.cameras.main.startFollow(player, false, 0, 0.1);
+      this.cameras.main.setDeadzone(0, height * 0.3);
+      
+      // Limite gauche-droite du monde
+      this.physics.world.setBounds(0, -100000, width, 100000);
+      player.setCollideWorldBounds(true);
 
-      // Nouvelle bombe toutes les 30s
-      this.time.addEvent({
-        delay: 30000,
-        loop: true,
-        callback: () => {
-          if (!gameOver) spawnBomb();
-        }
-      });
+      highestY = player.y;
     }
 
     // ================= UPDATE =================
     function update() {
       if (gameOver) return;
 
+      // Contrôles
       if (cursors.left.isDown) {
-        player.setVelocityX(-160);
+        player.setVelocityX(-250);
         player.anims.play('left', true);
       } else if (cursors.right.isDown) {
-        player.setVelocityX(160);
+        player.setVelocityX(250);
         player.anims.play('right', true);
       } else {
         player.setVelocityX(0);
@@ -201,84 +180,102 @@
       }
 
       if (cursors.up.isDown && player.body.touching.down) {
-        player.setVelocityY(-330);
+        player.setVelocityY(-500);
       }
-    }
 
-    // ================= GAMEPLAY =================
-    function updateLivesDisplay() {
-      for (let i = 0; i < 3; i++) {
-        const value = halfLives - i * 2;
-        if (value >= 2) lifeIcons[i].setTexture('vie');
-        else if (value === 1) lifeIcons[i].setTexture('demivie');
-        else lifeIcons[i].setTexture('novie');
+      // Mise à jour du score (hauteur)
+      if (player.y < highestY) {
+        highestY = player.y;
+        score = Math.floor((this.cameras.main.height - highestY) / 10);
+        scoreText.setText('Hauteur: ' + score + 'm');
       }
-    }
 
-    // ⭐ TOUTES les pièces = +1 demi-cœur
-    function collectStar(player, star) {
-      star.disableBody(true, true);
+      // Générer plus de plateformes quand on monte
+      const cameraTop = this.cameras.main.scrollY;
+      generatePlatforms(this, cameraTop - 1000, cameraTop - 3000);
 
-      if (stars.countActive(true) === 0) {
+      // Mort si on tombe en bas de l'écran
+      const cameraBottom = this.cameras.main.scrollY + this.cameras.main.height;
+      if (player.y > cameraBottom + 100) {
+        die(this);
+      }
 
-        if (halfLives < MAX_HALF_LIVES) {
-          halfLives++;
-          updateLivesDisplay();
+      // Nettoyer les plateformes trop basses
+      platformGroup.children.entries.forEach(platform => {
+        if (platform.y > cameraBottom + 500) {
+          platform.destroy();
         }
+      });
+    }
 
-        stars.children.iterate(c =>
-          c.enableBody(true, c.x, 0, true, true)
-        );
+    // ================= FONCTIONS =================
+    function generatePlatforms(scene, minY, maxY) {
+      const width = scene.cameras.main.width;
+      const height = scene.cameras.main.height;
+      
+      // Calculer combien de patterns on doit générer
+      const patternHeight = 2000; // Hauteur d'un pattern complet
+      const startPattern = Math.floor(maxY / patternHeight);
+      const endPattern = Math.floor(minY / patternHeight);
+      
+      for (let p = startPattern; p <= endPattern; p++) {
+        const baseY = p * patternHeight;
+        
+        platformPattern.forEach(platform => {
+          const x = platform.x * width;
+          const y = baseY + platform.y;
+          
+          // Vérifier si une plateforme existe déjà à cet endroit
+          const exists = platformGroup.children.entries.some(existing => 
+            Math.abs(existing.x - x) < 10 && Math.abs(existing.y - y) < 10
+          );
+          
+          if (!exists && y < minY && y > maxY - 500) {
+            const cubeTypes = ['cube1', 'cube2', 'cube3'];
+            const cubeType = Phaser.Utils.Array.GetRandom(cubeTypes);
+            
+            const newPlatform = platformGroup.create(x, y, cubeType);
+            newPlatform.setScale(platform.size * 1.5).refreshBody();
+            newPlatform.cubeType = cubeType;
+          }
+        });
       }
     }
 
-    // 💣 Bombe = –1 cœur
-    function hitBomb(player, bomb) {
-      bomb.disableBody(true, true);
-
-      halfLives -= 2;
-      if (halfLives < 0) halfLives = 0;
-      updateLivesDisplay();
-
-      if (halfLives <= 0) {
-        gameOver = true;
-        this.physics.pause();
-        player.setTint(0xff0000);
-        player.anims.play('turn');
-      }
-    }
-
-    function spawnBomb() {
-      const bomb = bombs.create(
-        Phaser.Math.Between(50, 750),
-        16,
-        'bomb'
-      );
-      bomb.setScale(0.015);
-      bomb.setBounce(1);
-      bomb.setCollideWorldBounds(true);
-      bomb.setVelocity(
-        Phaser.Math.Between(-200, 200),
-        Phaser.Math.Between(50, 200)
-      );
-    }
-
-    function victory(scene) {
+    function die(scene) {
+      if (gameOver) return;
+      
       gameOver = true;
       scene.physics.pause();
-      player.setTint(0x00ff00);
+      player.setTint(0xff0000);
+      player.anims.play('turn');
 
-      localStorage.setItem('level1', 'done');
+      const width = scene.cameras.main.width;
+      const height = scene.cameras.main.height;
 
-      scene.add.text(260, 280, 'Victoire !', {
-        fontSize: '40px',
-        fill: '#00ff00'
-      });
+      scene.add.text(width / 2, height / 2, 'Game Over!', {
+        fontSize: '64px',
+        fill: '#ff0000',
+        stroke: '#000',
+        strokeThickness: 6
+      }).setOrigin(0.5).setScrollFactor(0).setDepth(100);
+
+      scene.add.text(width / 2, height / 2 + 70, 'Hauteur finale: ' + score + 'm', {
+        fontSize: '32px',
+        fill: '#fff',
+        stroke: '#000',
+        strokeThickness: 4
+      }).setOrigin(0.5).setScrollFactor(0).setDepth(100);
 
       scene.time.delayedCall(3000, () => {
         window.location.href = 'index.html';
       });
     }
+
+    // Redimensionnement de la fenêtre
+    window.addEventListener('resize', () => {
+      game.scale.resize(window.innerWidth, window.innerHeight);
+    });
   </script>
 
 </body>
